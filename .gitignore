@@ -1,0 +1,17 @@
+# Firebase / Google Cloud credentials
+src/main/resources/*firebase-adminsdk*.json
+src/main/resources/*storage*.json
+
+# Environment files
+.env
+.env.*
+
+# Java / Maven
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
