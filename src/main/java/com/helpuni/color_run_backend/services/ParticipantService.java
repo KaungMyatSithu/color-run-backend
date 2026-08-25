@@ -21,6 +21,7 @@ public class ParticipantService {
     private static final String COLLECTION = "registrations";
     private final Firestore firestore;
     private final FileStorageService fileService;
+    private final EmailService emailService;
 
     public Participant register(ParticipantRegistration request,
                                 MultipartFile studentCard,
@@ -68,6 +69,7 @@ public class ParticipantService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Failed to save registration", e);
         }
+        emailService.sendRegistrationReceived(participant);
         return participant;
     }
 
@@ -107,11 +109,17 @@ public class ParticipantService {
     public Participant updateStatus(String participantId, RegistrationStatus newStatus){
         DocumentReference docRef = firestore.collection(COLLECTION).document(participantId);
         try {
-            if(docRef.get().get().exists()){
+            DocumentSnapshot document = docRef.get().get();
+            if(!document.exists()){
                 throw new ResourceNotFoundException("No registration found for ID: " + participantId);
             }
+            Participant current = document.toObject(Participant.class);
             docRef.update("registrationStatus", newStatus.name()).get();
-            return getById(participantId);
+            Participant updated = getById(participantId);
+            if (current != null && current.getRegistrationStatus() != newStatus) {
+                emailService.sendStatusUpdate(updated);
+            }
+            return updated;
         } catch (InterruptedException | ExecutionException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Failed to update registration status", e);
