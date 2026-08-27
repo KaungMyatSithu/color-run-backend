@@ -4,6 +4,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.helpuni.color_run_backend.dto.ParticipantRegistration;
 import com.helpuni.color_run_backend.model.Participant;
+import com.helpuni.color_run_backend.model.enums.PriceType;
 import com.helpuni.color_run_backend.model.enums.RegistrationStatus;
 import com.helpuni.color_run_backend.utils.DuplicateRegistrationException;
 import com.helpuni.color_run_backend.utils.ResourceNotFoundException;
@@ -60,6 +61,10 @@ public class ParticipantService {
                 .studyProgramme(request.getStudyProgramme())
                 .studentCardUrl(studentCardUrl)
                 .tshirtSize(request.getTshirtSize())
+                // The registration flow does not yet expose an early-bird cutoff.
+                // NORMAL keeps existing registrations valid until that business rule is added.
+                .priceType(PriceType.NORMAL)
+                .receiptId("RCT-" + java.util.UUID.randomUUID())
                 .paymentReceiptUrl(paymentReceiptUrl)
                 .registrationStatus(RegistrationStatus.Pending)
                 .build();

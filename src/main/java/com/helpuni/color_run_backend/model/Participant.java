@@ -4,6 +4,7 @@ import com.google.cloud.firestore.annotation.ServerTimestamp;
 import com.helpuni.color_run_backend.model.enums.Gender;
 import com.helpuni.color_run_backend.model.enums.RegistrationStatus;
 import com.helpuni.color_run_backend.model.enums.TshirtSize;
+import com.helpuni.color_run_backend.model.enums.PriceType;
 import lombok.*;
 
 import java.util.Date;
@@ -29,6 +30,8 @@ public class Participant {
     private String studyProgramme;
     private String studentCardUrl;
     private TshirtSize tshirtSize;
+    private PriceType priceType;
+    private String receiptId;
     private String paymentReceiptUrl;
     @ServerTimestamp
     private Date registrationDate;

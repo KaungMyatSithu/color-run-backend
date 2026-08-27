@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
                 .body(HttpResponse.of(409, ex.getMessage(), null));
     }
 
+    @ExceptionHandler(DuplicateTransactionException.class)
+    public ResponseEntity<HttpResponse<Void>> handleDuplicateTransaction(DuplicateTransactionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(HttpResponse.of(409, ex.getMessage(), null));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<HttpResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

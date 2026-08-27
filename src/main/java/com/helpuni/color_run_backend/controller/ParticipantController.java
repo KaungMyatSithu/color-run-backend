@@ -44,7 +44,7 @@ public class ParticipantController {
                 .body(HttpResponse.of(201, "Registration Submitted, pending Validation.", saved));
     }
 
-    @GetMapping("{/participantId}")
+    @GetMapping("/{participantId}")
     public ResponseEntity<HttpResponse<Participant>> getParticipantById(@PathVariable String participantId){
         Participant participant = participantService.getById(participantId);
         return ResponseEntity.ok(HttpResponse.of(200,"Found",participant));
