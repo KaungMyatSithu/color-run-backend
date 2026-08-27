@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -28,9 +29,8 @@ public class ParticipantService {
                                 MultipartFile studentCard,
                                 MultipartFile paymentReceipt){
 
-        DocumentReference docRef = firestore.collection(COLLECTION).document(request.getIcNumber());
         try {
-            if(docRef.get().get().exists()){
+            if (isIcNumberTaken(request.getIcNumber())) {
                 throw new DuplicateRegistrationException("This IC Number is already Registered.");
             }
             if (isEmailTaken(request.getPersonalEmail())){
@@ -41,12 +41,16 @@ public class ParticipantService {
             throw new RuntimeException("Failed to check for duplicate registration", e);
         }
 
+        // The frontend treats participant ID (for example, P-001) as separate from IC number.
+        String participantId = "P-" + UUID.randomUUID().toString().toUpperCase();
+        DocumentReference docRef = firestore.collection(COLLECTION).document(participantId);
+
         //Upload studentCard and Receipt
-        String studentCardUrl = fileService.uploadStudentCard(studentCard, request.getIcNumber());
-        String paymentReceiptUrl = fileService.uploadPaymentReceipt(paymentReceipt,request.getIcNumber());
+        String studentCardUrl = fileService.uploadStudentCard(studentCard, participantId);
+        String paymentReceiptUrl = fileService.uploadPaymentReceipt(paymentReceipt, participantId);
 
         Participant participant = Participant.builder()
-                .participantId(request.getIcNumber())
+                .participantId(participantId)
                 .tncAgreement(request.isTncAgreement())
                 .studentName(request.getStudentName())
                 .age(request.getAge())
@@ -134,6 +138,14 @@ public class ParticipantService {
     private boolean isEmailTaken(String email) throws ExecutionException, InterruptedException{
         ApiFuture<QuerySnapshot> future = firestore.collection(COLLECTION)
                 .whereEqualTo("personalEmail",email)
+                .limit(1)
+                .get();
+        return !future.get().isEmpty();
+    }
+
+    private boolean isIcNumberTaken(String icNumber) throws ExecutionException, InterruptedException {
+        ApiFuture<QuerySnapshot> future = firestore.collection(COLLECTION)
+                .whereEqualTo("icNumber", icNumber)
                 .limit(1)
                 .get();
         return !future.get().isEmpty();

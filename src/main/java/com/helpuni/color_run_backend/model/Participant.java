@@ -15,7 +15,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class Participant {
-    private String participantId; // we use the IC number as the document ID
+    private String participantId; // generated public participant ID and Firestore document ID
     private boolean tncAgreement;
     private String studentName;
     private int age;
