@@ -6,9 +6,11 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
 import com.helpuni.color_run_backend.utils.InvalidFileException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -21,6 +23,8 @@ public class FileStorageService {
 
     private static final List<String> IMAGE_TYPES = List.of("image/jpeg", "image/jpg", "image/png");
     private static final List<String> RECEIPT_TYPE = List.of("image/jpeg", "image/jpg", "image/png", "application/pdf");
+
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
     private final Drive driveService;
 
@@ -82,6 +86,7 @@ public class FileStorageService {
             return uploaded.getWebContentLink();
 
         }catch(IOException e){
+            logger.error("Drive upload failed for participant {}: {}", participantId, e.getMessage(), e);
             throw new RuntimeException("Failed to upload file to Google Drive", e);
         }
     }

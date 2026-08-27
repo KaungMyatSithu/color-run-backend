@@ -24,7 +24,7 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        if(!request.getRequestURI().startsWith("/api/admin")){
+        if(!request.getRequestURI().startsWith("/api/admins")){
             filterChain.doFilter(request,response);
             return;
         }
