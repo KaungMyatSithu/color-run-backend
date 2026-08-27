@@ -14,13 +14,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 public class ParticipantService {
     private static final String COLLECTION = "registrations";
+    private static final String COUNTERS_COLLECTION = "counters";
+    private static final String PARTICIPANT_COUNTER_DOCUMENT = "participants";
+    private static final String LAST_PARTICIPANT_NUMBER = "lastParticipantNumber";
     private final Firestore firestore;
     private final FileStorageService fileService;
     private final EmailService emailService;
@@ -42,7 +45,7 @@ public class ParticipantService {
         }
 
         // The frontend treats participant ID (for example, P-001) as separate from IC number.
-        String participantId = "P-" + UUID.randomUUID().toString().toUpperCase();
+        String participantId = nextParticipantId();
         DocumentReference docRef = firestore.collection(COLLECTION).document(participantId);
 
         //Upload studentCard and Receipt
@@ -149,5 +152,36 @@ public class ParticipantService {
                 .limit(1)
                 .get();
         return !future.get().isEmpty();
+    }
+
+    /**
+     * Allocates a human-readable public ID atomically, even when two registrations arrive together.
+     * The counter is stored at counters/participants and starts at P-001.
+     */
+    private String nextParticipantId() {
+        try {
+            return firestore.runTransaction(transaction -> {
+                DocumentReference counterRef = firestore.collection(COUNTERS_COLLECTION)
+                        .document(PARTICIPANT_COUNTER_DOCUMENT);
+                DocumentSnapshot counter = transaction.get(counterRef).get();
+                Long lastNumber = counter.getLong(LAST_PARTICIPANT_NUMBER);
+                long candidateNumber = lastNumber == null ? 1 : lastNumber + 1;
+
+                while (true) {
+                    String candidateId = String.format("P-%03d", candidateNumber);
+                    DocumentReference participantRef = firestore.collection(COLLECTION).document(candidateId);
+                    if (!transaction.get(participantRef).get().exists()) {
+                        transaction.set(counterRef, Map.of(LAST_PARTICIPANT_NUMBER, candidateNumber));
+                        return candidateId;
+                    }
+                    candidateNumber++;
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to allocate participant ID", e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Failed to allocate participant ID", e);
+        }
     }
 }
